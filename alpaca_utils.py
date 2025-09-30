@@ -186,7 +186,6 @@ async def start_price_bar_stream(symbols):
 async def stop_price_quote_bar_stream(symbol):
     try:
         stock_stream.unsubscribe_trades(symbol)
-        # stock_stream.unsubscribe_quotes(symbol)
         stock_stream.unsubscribe_bars(symbol)
         print(f"[{symbol}] price/quote stream unsubscribed")
     except Exception as e:
