@@ -6,10 +6,6 @@ from alpaca.data.historical.stock import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
-import pandas as pd
-import pandas_ta as ta
-import statistics
-
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest
 from alpaca.trading.requests import LimitOrderRequest
@@ -42,10 +38,6 @@ last_tick = {}
 tick_counter = {}
 
 latest_prices = {}
-day_high = {}
-
-latest_macd = {}
-latest_rsi = {}
 
 vwaps = {}
 latest_highs = {}
@@ -59,7 +51,7 @@ trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE
 stock_stream = StockDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.SIP)
 
 
-# ===== WEBSOCKETS, DATA STREAM HANDLERS + MACD CALC ===== #
+# ===== WEBSOCKETS, DATA STREAM HANDLERS ===== #
 @dataclass
 class QuoteEntry:
     bid: float
@@ -80,8 +72,6 @@ class DataHandler:
     def __init__(self):
         self.quote_window = defaultdict(lambda: deque(maxlen=500))
         self.bar_window = defaultdict(lambda: deque(maxlen=5))
-            # consider getting rid of deque altogether...
-            # and computing EMAs incrementally, manually... (without pandas-ta)
 
     async def handle_quote(self, quote: Quote):
         self.quote_window[quote.symbol].append(
@@ -94,37 +84,17 @@ class DataHandler:
 
     async def handle_trade(self, trade: Trade):
         symbol = trade.symbol
-        trade_time = trade.timestamp
         trade_price = trade.price
         setup = next((s for s in configs if s["symbol"] == symbol), None)
         entry = setup["entry_price"]
         exit = setup["stop_loss"]
         now = datetime.datetime.now(eastern)
 
-        #quotes: deque[QuoteEntry] = self.quote_window[symbol]
-        #if not quotes:
-        #    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-        #        await file.write(f"[GHOST no quotes] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-        #    return
-        
-        #closest_quote = min(quotes, key=lambda q: abs((q.timestamp - trade_time).total_seconds()))
-        #if abs((closest_quote.timestamp - trade_time).total_seconds()) > 1:
-        #    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-        #        await file.write(f"[GHOST >1sec gap] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-        #    return  
-        
-        #tolerance = 0.02 # 2.0%
-        #if not (closest_quote.bid * (1 - tolerance) <= trade_price <= closest_quote.ask * (1 - tolerance)):
-        #    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-        #        await file.write(f"[GHOST >2% price diff] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-        #    return
-
         if trade.size < 100:
             async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
                 await file.write(f"[ODD LOT] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
             return
         
-        # if all conditions pass:
         if trade_price > entry:
             if symbol not in gap_up_first_tick:
                 gap_up_first_tick[symbol] = trade_price
@@ -170,16 +140,6 @@ class DataHandler:
             async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
                 await file.write(f"[AROUND EXIT] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
 
-        
-        #else:
-        #    latest_prices[symbol] = trade_price
-        #    if symbol not in day_high or trade_price > day_high[symbol]:
-        #        day_high[symbol] = trade_price
-
-        # print(f"[WebSocket] {trade.symbol} @ {trade.price}") # comment out while not testing
-
-        #async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-        #    await file.write(f"{now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
 
     async def handle_bar(self, bar: Bar): 
         self.bar_window[bar.symbol].append(
@@ -193,132 +153,22 @@ class DataHandler:
                 timestamp=bar.timestamp
             )
         )
-        # bars = list(self.bar_window[bar.symbol])
-        # latest_macd[bar.symbol] = self.compute_macd(pd.DataFrame([b.__dict__ for b in bars]))
-        # latest_rsi[bar.symbol] = self.compute_rsi(pd.DataFrame([b.__dict__ for b in bars]))
-
         vwaps.setdefault(bar.symbol, []).append(bar.vwap)
-
-        # VWAP STDEV (NOT IN USE):
-        #if len(vwaps[bar.symbol]) > 1:
-        #    vwap_stdevs[bar.symbol] = statistics.stdev(vwaps[bar.symbol])
-
-        # 5MIN BARS (NOT IN USE):
-        #if len(self.bar_window[bar.symbol]) == 5:
-        #    last_entry = self.bar_window[bar.symbol][-1]
-        #    latest_5m_closes[bar.symbol] = last_entry.close
-
-        #    bar_highs = []
-        #    for bar_1m in self.bar_window[bar.symbol]:
-        #        bar_highs.append(bar_1m.high)
-        #    latest_5m_highs[bar.symbol] = max(bar_highs)
-
-        #    latest_5m_timestamps[bar.symbol] = last_entry.timestamp
-        #    self.bar_window[bar.symbol].clear()
 
         last_entry = self.bar_window[bar.symbol][-1]
         latest_highs[bar.symbol] = last_entry.high
-        latest_timestamps[bar.symbol] = last_entry.timestamp
-
-
-    
-    async def seed_history_recalc_on_bar(self, symbol):
-        lookback_bars = 20 # 100 for macd, 20 for rsi
-        lookback_minutes = lookback_bars * 15
-        now = datetime.datetime.now(eastern)
-        start_time = now - datetime.timedelta(minutes=lookback_minutes)
-        after_first_bar = now.replace(hour=4, minute=14, second=0, microsecond=0)
-
-        request_params = StockBarsRequest(
-            symbol_or_symbols=symbol,
-            timeframe=TimeFrame(5, TimeFrame.Minute),
-            start=start_time,
-            end=now,
-            adjustment="raw",
-            feed="sip"
-        )
-
-        bars = historical_client.get_stock_bars(request_params).df
-        if isinstance(bars.index, pd.MultiIndex):
-            df = bars.xs(symbol, level=0).sort_index()
-        else:
-            df = bars.sort_index()
-    
-        # NOTE: bar timestamps are actually the START of the bar, e.g. 10:00 = 10:00-10:04:59
-        print("TIMESTAMPS", df.index[:5]) # REMOVE LATER - returns DatetimeIndex list/RangeIndex...
-        print("TIMEZONE", df.index.tz) # REMOVE LATER - UTC confirmed
-
-        df_15m = df.resample("15min").agg({
-            "open": "first",
-            "high": "max",
-            "low": "min",
-            "close": "last",
-            "volume": "sum"
-        })
-        df_15m = df_15m.dropna()
-
-        for _, row in df_15m.iterrows():
-            self.bar_window[symbol].append(row)
-        
-        # latest_macd[symbol] = self.compute_macd(sdf)
-        latest_rsi[symbol] = self.compute_rsi(pd.DataFrame(self.bar_window[symbol]))
-        print("SEED DATA", self.bar_window[symbol]) # REMOVE LATER
-        print("SEED RSI", latest_rsi[symbol]) # REMOVE LATER
-
-        last_bar_time = None
-        while True:
-            now = datetime.datetime.now(eastern)
-
-            if now.minute % 15 == 0 and now.second < 2 and now > after_first_bar:
-                latest_bar_request = StockBarsRequest(
-                    symbol_or_symbols=symbol,
-                    timeframe=TimeFrame(5, TimeFrame.Minute),
-                    limit=1
-                )
-
-                bars = historical_client.get_stock_bars(latest_bar_request).df
-                print("BARS", bars.head()) # REMOVE LATER
-                if bars.empty:
-                    await asyncio.sleep(2)
-                    continue
-
-                latest_bar_time = bars.index[-1]
-                if latest_bar_time != last_bar_time:
-                    last_bar_time = latest_bar_time
-
-                    for _, row in bars.iterrows():
-                        self.bar_window[symbol].append(row)
-                    latest_rsi[symbol] = self.compute_rsi(pd.DataFrame(self.bar_window[symbol]))
-                    print("RSI LIST", latest_rsi[symbol]) # REMOVE LATER
-            await asyncio.sleep(1)    
-
-    def compute_macd(self, df: pd.DataFrame) -> pd.DataFrame:
-        if df.empty:
-            return df
-        df = df.copy()
-        macd = ta.macd(df['close'], fast=12, slow=26, signal=9, append=True)
-        return macd
-    
-    def compute_rsi(self, df: pd.DataFrame) -> float:
-        if df.empty:
-            return 0
-        df = df.copy()
-        rsi = ta.rsi(df['close'], length=14)
-        return float(rsi.iloc[-1])
+        latest_timestamps[bar.symbol] = last_entry.timestamp 
 
 
 # ===== OPEN/CLOSE STREAM, HANDLER CALL UTILS ===== #
 handler = DataHandler()
 
-async def start_price_quote_bar_stream(symbols):
+async def start_price_bar_stream(symbols):
     retries = 0
     while True:
         try:
             for symbol in symbols:
-                # asyncio.create_task(handler.seed_history_recalc_on_bar(symbol))
-
                 stock_stream.subscribe_trades(handler.handle_trade, symbol)
-                # stock_stream.subscribe_quotes(handler.handle_quote, symbol)
                 stock_stream.subscribe_bars(handler.handle_bar, symbol)
             
             await stock_stream._run_forever()
@@ -354,20 +204,6 @@ async def stop_price_quote_bar_stream(symbol):
 def get_current_price(symbol):
     return latest_prices.get(symbol)
 
-def get_day_high(symbol):
-    return day_high.get(symbol)
-
-def get_latest_macd(symbol):
-    df = latest_macd.get(symbol)
-    return df.iloc[-1]
-
-def get_latest_rsi(symbol):
-    rsi = latest_rsi.get(symbol)
-    if rsi is None:
-        return 0
-    print(symbol, f"RSI: {rsi}") # REMOVE LATER
-    return rsi
-
 def get_bar_data(symbol):
     vwap_list = vwaps.get(symbol)
     if vwap_list is None:
@@ -384,11 +220,6 @@ def get_bar_data(symbol):
 
 
 # ===== TRADING CLIENT UTILS ===== #
-def is_intraday():
-    eastern = pytz.timezone("US/Eastern")
-    now = datetime.datetime.now(eastern).time()
-    return (datetime.time(9,30) <= now < datetime.time(16,0))
-
 def place_order(symbol, qty):
     intraday = is_intraday()
     tick = get_current_price(symbol)
