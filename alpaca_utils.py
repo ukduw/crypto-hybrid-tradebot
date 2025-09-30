@@ -73,15 +73,6 @@ class DataHandler:
         self.quote_window = defaultdict(lambda: deque(maxlen=500))
         self.bar_window = defaultdict(lambda: deque(maxlen=5))
 
-    async def handle_quote(self, quote: Quote):
-        self.quote_window[quote.symbol].append(
-            QuoteEntry(
-                bid=quote.bid_price,
-                ask=quote.ask_price,
-                timestamp=quote.timestamp
-            )
-        )
-
     async def handle_trade(self, trade: Trade):
         symbol = trade.symbol
         trade_price = trade.price
