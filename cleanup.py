@@ -22,6 +22,7 @@ with open("configs.json", "r") as f:
 
 symbols = [setup["symbol"] for setup in configs_json]
 
+# REFACTOR FOR CRYPTO
 
 async def main():
     print("Running systemd cleanup...")
