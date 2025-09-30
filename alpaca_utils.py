@@ -45,6 +45,7 @@ now = datetime.datetime.now(eastern)
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
 stock_stream = StockDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.SIP)
 
+# REFACTOR FOR CRYPTO
 # replace websockets
 # replace api calls
 # remove day high assignments
