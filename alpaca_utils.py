@@ -50,6 +50,13 @@ historical_client = StockHistoricalDataClient(api_key=API_KEY, secret_key=SECRET
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
 stock_stream = StockDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.SIP)
 
+# replace websockets
+# replace api calls
+# remove day high assignments
+# remove gap up protection
+# fix/replace trading utils
+# change timezone to UTC
+
 
 # ===== WEBSOCKETS, DATA STREAM HANDLERS ===== #
 @dataclass
