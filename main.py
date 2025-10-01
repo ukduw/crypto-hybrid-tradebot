@@ -51,7 +51,7 @@ symbols = [setup["symbol"] for setup in cached_configs]
     # include logic to prevent late entries after a slot opens up
     # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
 # comment out config modification for now - can be repurposed for a 24/7 version of script
-# remove all pb calls
+# rewrite log writes
 # remove any time-based constraints/logic
 # refactor profit taking to be 100%; no need for partial profits
     # profit taking logic needs crypto-specific testing/tweaking...
@@ -101,13 +101,11 @@ async def monitor_trade(setup):
                         print(f"[{symbol}] EOD, 2nd 50% Exit @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now}, {symbol}, EOD 2nd 50% Exit, {qty}, {price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] EOD, 2nd Exiting 50% position @ {price}")
                     else:
                         close_position(symbol, qty)
                         print(f"[{symbol}] EOD, 100% Exit @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now}, {symbol}, EOD 100% Exit, {qty}, {price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] EOD, Exiting 100% position @ {price}")
 
                 await stop_price_bar_stream(symbol)
                 return
@@ -126,7 +124,6 @@ async def monitor_trade(setup):
                                 day_trade_counter += 1
                                 async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                                     await file.write(f"{now},{symbol},ENTRY,{qty},{price}" + "\n")
-                                pb.push_note("Hybrid bot", f"{qty} [{symbol}] BUY @ {price}")
                 elif not day_trade_counter < 1 and price > entry:
                     print(f"Skipped [{symbol}] @ {price}, PDT limit hit...")
                     # await stop_price_bar_stream(symbol)
@@ -148,14 +145,12 @@ async def monitor_trade(setup):
                         print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
                         return
                     else:
                         close_position(symbol, qty)
                         print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
                         return
 
                 await asyncio.sleep(1)
@@ -170,14 +165,12 @@ async def monitor_trade(setup):
                         print(f"[{symbol}] TAKE-PROFIT hit. Exiting 50% position @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now}, {symbol}, 50% Exit, {half_position}, {price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] TAKE-PROFIT hit. Exiting 50% position @ {price}")
                         continue
                     else:
                         close_position(symbol, other_half)
                         print(f"[{symbol}] TAKE-PROFIT hit. 2nd Exiting 50% position @ {price}")
                         async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                             await file.write(f"{now}, {symbol}, 2nd 50% Exit, {qty}, {price}" + "\n")
-                        pb.push_note("Hybrid bot", f"[{symbol}] TAKE-PROFIT hit. 2nd Exiting 50% position @ {price}")
                         return
 
                 while True:
