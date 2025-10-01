@@ -33,17 +33,26 @@ universal = pytz.timezone("UTC")
 now = datetime.datetime.now(universal)
 
 
-# script to calculate and summarize daily p/l
-    # read crypto_trade_log.txt
-    # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
-    # get prices
-    # calculate % difference, total, with below format
-    # include total count of trades?
-
-# pushbullet noti
 # write to log - needs systemd service/timer
     # run at 23:30 (UTC)?
 
+def daily_pl_calc():
+    # script to calculate and summarize daily p/l
+        # read crypto_trade_log.txt
+        # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
+        # get prices
+        # calculate % difference, total, with below format
+        # include total count of trades?
+
+    # pushbullet noti
+
+    return
+
+
 # format e.g. +5.0%, -1.6%, +3.4%...
     # total (additive): x%
+
+
+if __name__ == "__main__":
+    daily_pl_calc()
 
