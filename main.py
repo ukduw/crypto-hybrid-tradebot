@@ -97,7 +97,7 @@ async def monitor_trade(setup):
                             await file.write(f"{now}, {symbol}, EOD 100% Exit, {qty}, {price}" + "\n")
                         pb.push_note("Hybrid bot", f"[{symbol}] EOD, Exiting 100% position @ {price}")
 
-                await stop_price_quote_bar_stream(symbol)
+                await stop_price_bar_stream(symbol)
                 return
 
 
@@ -117,7 +117,7 @@ async def monitor_trade(setup):
                                 pb.push_note("Hybrid bot", f"{qty} [{symbol}] BUY @ {price}")
                 elif not day_trade_counter < 1 and price > entry:
                     print(f"Skipped [{symbol}] @ {price}, PDT limit hit...")
-                    # await stop_price_quote_bar_stream(symbol)
+                    # await stop_price_bar_stream(symbol)
                     async with aiofiles.open("trade-log/trade_log.txt", "a") as file:
                         await file.write(f"{now},{symbol},skip,{qty},{price}" + "\n")
                     # return
