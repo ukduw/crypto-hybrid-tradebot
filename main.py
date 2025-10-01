@@ -89,7 +89,7 @@ async def monitor_trade(setup):
                     close_position(symbol, qty)
                     print(f"[{symbol}] EOD, Exit @ {price}")
                     async with aiofiles.open("trade-log/crypot_trade_log.txt", "a") as file:
-                        await file.write(f"{now}, {symbol}, EOD Exit, {qty}, {price}" + "\n")
+                        await file.write(f"{now}, {symbol}, EOD EXIT, {qty}, {price}" + "\n")
 
                 await stop_price_bar_stream(symbol)
                 return
@@ -142,7 +142,7 @@ async def monitor_trade(setup):
                         concurrent_trade_counter -= 1
                     print(f"[{symbol}] TAKE-PROFIT hit. Exiting position @ {price}")
                     async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                        await file.write(f"{now}, {symbol}, Exit, {qty}, {price}" + "\n")
+                        await file.write(f"{now}, {symbol}, EXIT, {qty}, {price}" + "\n")
                     continue
 
                 while True:
