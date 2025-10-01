@@ -20,9 +20,9 @@ day_trade_counter = 0
 day_trade_lock = asyncio.Lock()
 
 
-CONFIG_PATH = "configs.json"
+CONFIG_PATH = "crypto_configs.json"
 last_config_mtime = None
-with open("configs.json", "r") as f:
+with open("crypto_configs.json", "r") as f:
     cached_configs = json.load(f)
 
 def load_configs_on_modification():
@@ -45,7 +45,6 @@ symbols = [setup["symbol"] for setup in cached_configs]
 # REFACTOR FOR CRYPTO
 # replace websockets/api calls...
 # timezone UTC, change end condition to 23:30
-# new configs name/path
 # also rename trade-log?
 # rewrite PDT protection to be max concurrent trades protection
     # include logic to prevent late entries after a slot opens up
