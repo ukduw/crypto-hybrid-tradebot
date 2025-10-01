@@ -1,14 +1,7 @@
-# script to calculate and summarize daily p/l
-# write to log - needs systemd service/timer
-    # run at 23:30 (UTC)?
-# pushbullet noti
-
-# e.g. +5.0%, -1.6%, +3.4%...
-    # total (additive): x%
-
-
 import time
 import requests
+import pytz
+import datetime
 
 from pushbullet import Pushbullet
 
@@ -26,7 +19,7 @@ class DummyPB:
 pb = DummyPB()
 
 pb_reconnect_tries = 0
-while pb_reconnect_tries < 5: # low due to risk of getting stuck in loop past premarket open...
+while pb_reconnect_tries < 5:
     try:
         pb = Pushbullet(PB_API_KEY)
         break
@@ -34,3 +27,23 @@ while pb_reconnect_tries < 5: # low due to risk of getting stuck in loop past pr
         pb_reconnect_tries += 1
         print(f"PB connection failed({pb_reconnect_tries}/5), retrying in 10s...", e)
         time.sleep(10)
+
+
+universal = pytz.timezone("UTC")
+now = datetime.datetime.now(universal)
+
+
+# script to calculate and summarize daily p/l
+    # read crypto_trade_log.txt
+    # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
+    # get prices
+    # calculate % difference, total, with below format
+    # include total count of trades?
+
+# pushbullet noti
+# write to log - needs systemd service/timer
+    # run at 23:30 (UTC)?
+
+# format e.g. +5.0%, -1.6%, +3.4%...
+    # total (additive): x%
+
