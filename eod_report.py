@@ -29,30 +29,39 @@ while pb_reconnect_tries < 5:
         time.sleep(10)
 
 
-universal = pytz.timezone("UTC")
-now = datetime.datetime.now(universal)
-
-
 # write to log - needs systemd service/timer
     # run at 23:30 (UTC)?
 
 # intput format:
-    # "{now}, {symbol}, ENTRY/EXIT/skip, {qty}, {price}"
+    # "{now}, {coin}, ENTRY/EXIT/skip/EOD EXIT, {qty}, {price}"
     # ...
 
 def daily_pl_calc():
-    # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
-    # get prices
     # calculate % difference, total, with below format
     # include total count of trades?
 
+    entry_exit = {}
     percs = []
 
-    file = open("trade-log/crypto_trade_log.txt", "a")
-    lines = file.readlines()
+    universal = pytz.timezone("UTC")
+    now = datetime.datetime.now(universal)
+    today = now.date()
+
+    with open("trade-log/crypto_trade_log.txt", "a") as file:
+        lines = file.readlines()
 
     for l in lines:
-        return # placeholder
+        split_line = l.split(", ")
+        split_line[0] = datetime.datetime.strptime(split_line[0].strip(), "%Y-%m-%d %H:%M:%S")
+        
+        if split_line[0].date() == today:
+            if "ENTRY" in split_line[2]:
+                entry_exit[split_line[1]] = [float(split_line[4])]
+            if "EXIT" in split_line[2]:
+                entry_exit[split_line[1]].append(float(split_line[4]))
+
+
+
 
 
     # pushbullet noti
