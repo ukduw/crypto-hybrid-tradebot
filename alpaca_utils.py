@@ -184,7 +184,7 @@ async def start_price_bar_stream(symbols):
             print("[WebSocket] Stopped gracefully")
             break
 
-async def stop_price_quote_bar_stream(symbol):
+async def stop_price_bar_stream(symbol):
     try:
         stock_stream.unsubscribe_trades(symbol)
         stock_stream.unsubscribe_bars(symbol)
