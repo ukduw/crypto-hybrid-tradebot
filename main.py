@@ -16,8 +16,8 @@ now = datetime.datetime.now(universal)
 exit_open_positions_at = now.replace(hour=23, minute=30, second=0, microsecond=0)
 
 
-day_trade_counter = 0
-day_trade_lock = asyncio.Lock()
+concurrent_trade_counter = 0
+concurrent_trade_lock = asyncio.Lock()
 
 
 CONFIG_PATH = "crypto_configs.json"
@@ -44,9 +44,6 @@ symbols = [setup["symbol"] for setup in cached_configs]
 
 # REFACTOR FOR CRYPTO
 # replace websockets/api calls...
-# rewrite PDT protection to be max concurrent trades protection
-    # include logic to prevent late entries after a slot opens up
-    # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
 
 # needs profit taking logic to allow winners to run, not take profit on first >1.5 pwap
     # profit taking logic needs crypto-specific testing/tweaking...
@@ -99,25 +96,24 @@ async def monitor_trade(setup):
 
 
             if not in_position:
-                global day_trade_counter
-                if day_trade_counter < 1 and price > entry:
-                    async with day_trade_lock:
-                        if day_trade_counter < 1:
+                global concurrent_trade_counter
+                if concurrent_trade_counter < 4 and price > entry:
+                    async with concurrent_trade_lock:
+                        if concurrent_trade_counter < 4:
                             now = datetime.datetime.now(universal).time()
                             if now < datetime.time(23,0): # ~30min before end, tweak
                                 # place_order(symbol, qty)
                                 print(f"{qty} [{symbol}] BUY @ {price}")
                                 in_position = True
-                                day_trade_counter += 1
+                                concurrent_trade_counter += 1
                                 async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
                                     await file.write(f"{now},{symbol},ENTRY,{qty}, {price}" + "\n")
-                elif not day_trade_counter < 1 and price > entry:
+                elif not concurrent_trade_counter < 4 and price > entry:
                     print(f"Skipped [{symbol}] @ {price}, PDT limit hit...")
-                    # await stop_price_bar_stream(symbol)
+                    await stop_price_bar_stream(symbol)
                     async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
                         await file.write(f"{now},{symbol},skip,{qty}, {price}" + "\n")
-                    # return
-                    await asyncio.sleep(18000)
+                    return
 
                 await asyncio.sleep(1)
 
@@ -126,6 +122,9 @@ async def monitor_trade(setup):
 
                 if price < stop:
                     close_position(symbol, qty)
+                    global concurrent_trade_counter
+                    async with concurrent_trade_lock:
+                        concurrent_trade_counter -= 1
                     print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
                     async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
                         await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
@@ -138,6 +137,9 @@ async def monitor_trade(setup):
                 pwap_ratio = (high_1m/entry - 1) / (high_1m/vwap - 1)
                 if pwap_ratio > 1.5: # tweak
                     close_position(symbol, qty)
+                    global concurrent_trade_counter
+                    async with concurrent_trade_lock:
+                        concurrent_trade_counter -= 1
                     print(f"[{symbol}] TAKE-PROFIT hit. Exiting position @ {price}")
                     async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
                         await file.write(f"{now}, {symbol}, Exit, {qty}, {price}" + "\n")
