@@ -36,20 +36,32 @@ now = datetime.datetime.now(universal)
 # write to log - needs systemd service/timer
     # run at 23:30 (UTC)?
 
+# intput format:
+    # "{now}, {symbol}, ENTRY/EXIT/skip, {qty}, {price}"
+    # ...
+
 def daily_pl_calc():
-    # script to calculate and summarize daily p/l
-        # read crypto_trade_log.txt
-        # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
-        # get prices
-        # calculate % difference, total, with below format
-        # include total count of trades?
+    # compare datetime DATE with now; if ==, if "ENTRY", if "EXIT"
+    # get prices
+    # calculate % difference, total, with below format
+    # include total count of trades?
+
+    percs = []
+
+    file = open("trade-log/crypto_trade_log.txt", "a")
+    lines = file.readlines()
+
+    for l in lines:
+        return # placeholder
+
 
     # pushbullet noti
+    pb.push_note("title", "message") # placeholder
+    print("message") # placeholder
 
-    return
 
-
-# format e.g. +5.0%, -1.6%, +3.4%...
+# output format:
+    # +5.0%, -1.6%, +3.4%...
     # total (additive): x%
 
 
