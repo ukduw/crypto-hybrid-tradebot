@@ -60,9 +60,13 @@ def daily_pl_calc():
             if "EXIT" in split_line[2]:
                 entry_exit[split_line[1]].append(float(split_line[4]))
 
+    for coin in entry_exit:
+        pl = round( ( coin[1] / coin[0] - 1 ) * 100, 1 )
+        percs.append(pl)
 
-
-
+    total_trades = len(percs)
+    total_pl = sum(percs)
+    
 
     # pushbullet noti
     pb.push_note("title", "message") # placeholder
