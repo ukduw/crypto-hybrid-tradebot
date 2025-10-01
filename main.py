@@ -9,7 +9,7 @@ import aiofiles
 import os
 
 
-from alpaca_utils import start_price_bar_stream, get_current_price, get_bar_data, stop_price_bar_stream, place_order, close_position, close_all_positions, stock_stream
+from alpaca_utils import start_price_bar_stream, get_current_price, get_bar_data, stop_price_bar_stream, place_order, close_position, stock_stream
 
 eastern = pytz.timezone("US/Eastern")
 now = datetime.datetime.now(eastern)
