@@ -43,6 +43,16 @@ symbols = [setup["symbol"] for setup in cached_configs]
 
 
 # REFACTOR FOR CRYPTO
+# replace websockets/api calls...
+# timezone UTC, change end condition to 23:30
+# rewrite PDT protection to be max concurrent trades protection
+    # include logic to prevent late entries after a slot opens up
+    # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
+# comment out config modification for now - can be repurposed for a 24/7 version of script
+# remove all pb calls
+# remove any time-based constraints/logic
+# refactor profit taking to be 100%; no need for partial profits
+    # profit taking logic needs crypto-specific testing/tweaking...
 
 # event driven refactor low priority
 # write README
