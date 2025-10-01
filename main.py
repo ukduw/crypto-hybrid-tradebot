@@ -44,13 +44,12 @@ symbols = [setup["symbol"] for setup in cached_configs]
 
 # REFACTOR FOR CRYPTO
 # replace websockets/api calls...
-# update/remove trade log writes
 # rewrite PDT protection to be max concurrent trades protection
     # include logic to prevent late entries after a slot opens up
     # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
-# refactor profit taking to be 100%; no need for partial profits
-    # profit taking logic needs crypto-specific testing/tweaking...
 
+# needs profit taking logic to allow winners to run, not take profit on first >1.5 pwap
+    # profit taking logic needs crypto-specific testing/tweaking...
 # event driven refactor low priority
 # write README
 
@@ -58,7 +57,6 @@ symbols = [setup["symbol"] for setup in cached_configs]
 async def monitor_trade(setup):
     symbol = setup["symbol"]
     in_position = False
-    take_50 = False
 
     print(f"[{symbol}] Monitoring... {setup["entry_price"]}, {setup["stop_loss"]}")
 
@@ -91,16 +89,10 @@ async def monitor_trade(setup):
             now = datetime.datetime.now(universal)
             if now >= exit_open_positions_at:
                 if in_position:
-                    if take_50:
-                        close_position(symbol, other_half)
-                        print(f"[{symbol}] EOD, 2nd 50% Exit @ {price}")
-                        async with aiofiles.open("trade-log/crypot_trade_log.txt", "a") as file:
-                            await file.write(f"{now}, {symbol}, EOD 2nd 50% Exit, {qty}, {price}" + "\n")
-                    else:
-                        close_position(symbol, qty)
-                        print(f"[{symbol}] EOD, 100% Exit @ {price}")
-                        async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                            await file.write(f"{now}, {symbol}, EOD 100% Exit, {qty}, {price}" + "\n")
+                    close_position(symbol, qty)
+                    print(f"[{symbol}] EOD, Exit @ {price}")
+                    async with aiofiles.open("trade-log/crypot_trade_log.txt", "a") as file:
+                        await file.write(f"{now}, {symbol}, EOD Exit, {qty}, {price}" + "\n")
 
                 await stop_price_bar_stream(symbol)
                 return
@@ -118,35 +110,26 @@ async def monitor_trade(setup):
                                 in_position = True
                                 day_trade_counter += 1
                                 async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                                    await file.write(f"{now},{symbol},ENTRY,{qty},{price}" + "\n")
+                                    await file.write(f"{now},{symbol},ENTRY,{qty}, {price}" + "\n")
                 elif not day_trade_counter < 1 and price > entry:
                     print(f"Skipped [{symbol}] @ {price}, PDT limit hit...")
                     # await stop_price_bar_stream(symbol)
                     async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                        await file.write(f"{now},{symbol},skip,{qty},{price}" + "\n")
+                        await file.write(f"{now},{symbol},skip,{qty}, {price}" + "\n")
                     # return
                     await asyncio.sleep(18000)
 
                 await asyncio.sleep(1)
 
             if in_position:
-                half_position = round(qty / 2)
-                other_half = qty - half_position
                 vwap, high_1m, timestamp_1m = get_bar_data(symbol)
 
                 if price < stop:
-                    if take_50:
-                        close_position(symbol, other_half)
-                        print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
-                        async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                            await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
-                        return
-                    else:
-                        close_position(symbol, qty)
-                        print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
-                        async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                            await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
-                        return
+                    close_position(symbol, qty)
+                    print(f"[{symbol}] STOP-LOSS hit. Exiting @ {price}")
+                    async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
+                        await file.write(f"{now},{symbol},EXIT,{qty},{price}" + "\n")
+                    return
 
                 await asyncio.sleep(1)
                 if any(bd is None for bd in [vwap, high_1m, timestamp_1m]):
@@ -154,19 +137,11 @@ async def monitor_trade(setup):
 
                 pwap_ratio = (high_1m/entry - 1) / (high_1m/vwap - 1)
                 if pwap_ratio > 1.5: # tweak
-                    if not take_50:
-                        take_50 = True
-                        close_position(symbol, half_position)
-                        print(f"[{symbol}] TAKE-PROFIT hit. Exiting 50% position @ {price}")
-                        async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                            await file.write(f"{now}, {symbol}, 50% Exit, {half_position}, {price}" + "\n")
-                        continue
-                    else:
-                        close_position(symbol, other_half)
-                        print(f"[{symbol}] TAKE-PROFIT hit. 2nd Exiting 50% position @ {price}")
-                        async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
-                            await file.write(f"{now}, {symbol}, 2nd 50% Exit, {qty}, {price}" + "\n")
-                        return
+                    close_position(symbol, qty)
+                    print(f"[{symbol}] TAKE-PROFIT hit. Exiting position @ {price}")
+                    async with aiofiles.open("trade-log/crypto_trade_log.txt", "a") as file:
+                        await file.write(f"{now}, {symbol}, Exit, {qty}, {price}" + "\n")
+                    continue
 
                 while True:
                     vwap2, high_1m2, timestamp_1m2 = get_bar_data(symbol)
