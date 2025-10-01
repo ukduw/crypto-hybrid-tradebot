@@ -45,6 +45,8 @@ symbols = [setup["symbol"] for setup in cached_configs]
 # REFACTOR FOR CRYPTO
 # replace websockets/api calls...
 # timezone UTC, change end condition to 23:30
+# new configs name/path
+# also rename trade-log?
 # rewrite PDT protection to be max concurrent trades protection
     # include logic to prevent late entries after a slot opens up
     # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
