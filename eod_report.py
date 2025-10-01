@@ -29,7 +29,7 @@ while pb_reconnect_tries < 5:
         time.sleep(10)
 
 
-# write to log - needs systemd service/timer
+# WRITE TO LOG - NEEDS SYSTEMD SERVICE/TIMER
     # run at 23:30 (UTC)?
 
 # intput format:
@@ -37,9 +37,6 @@ while pb_reconnect_tries < 5:
     # ...
 
 def daily_pl_calc():
-    # calculate % difference, total, with below format
-    # include total count of trades?
-
     entry_exit = {}
     percs = []
 
@@ -68,9 +65,8 @@ def daily_pl_calc():
     total_pl = sum(percs)
     
 
-    # pushbullet noti
-    pb.push_note("title", "message") # placeholder
-    print("message") # placeholder
+    pb.push_note("Crypto P/L", f"{total_pl}% ({total_trades}): {percs}")
+    print(f"{total_pl}% ({total_trades}): {percs}")
 
 
 # output format:
