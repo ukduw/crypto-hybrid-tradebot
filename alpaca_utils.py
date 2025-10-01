@@ -259,14 +259,3 @@ def close_position(symbol, qty):
     else:
         return trading_client.close_position(symbol, qty)
 
-def close_all_positions():
-    try:
-        results = trading_client.close_all_positions()    
-        eastern = pytz.timezone("US/Eastern")
-        now = datetime.datetime.now(eastern)
-        for r in results:
-            print(f"Closed: {r.symbol} - Qty: {r.qty}")
-            with open("trade-log/trade_log.txt", "a") as file:
-                file.write(f"{now}, {r.get('symbol')}, {r.get('qty')}, EOD Exit; break even" + "\n")
-    except Exception as e:
-        print(f"Failed to close positions: {e}")
