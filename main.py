@@ -37,7 +37,7 @@ def load_configs_on_modification():
     except Exception as e:
         print(f"[LOOP] Configs mid-modification: {e}")
     return cached_configs
-
+# CAN BE USED IN 24/7 VERSION OF SCRIPT
 
 symbols = [setup["symbol"] for setup in cached_configs]
 
@@ -49,7 +49,6 @@ symbols = [setup["symbol"] for setup in cached_configs]
 # rewrite PDT protection to be max concurrent trades protection
     # include logic to prevent late entries after a slot opens up
     # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
-# comment out config modification for now - can be repurposed for a 24/7 version of script
 # rewrite log writes
 # remove any time-based constraints/logic
 # refactor profit taking to be 100%; no need for partial profits
