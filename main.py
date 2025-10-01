@@ -11,9 +11,9 @@ import os
 
 from alpaca_utils import start_price_bar_stream, get_current_price, get_bar_data, stop_price_bar_stream, place_order, close_position, stock_stream
 
-eastern = pytz.timezone("US/Eastern")
-now = datetime.datetime.now(eastern)
-exit_open_positions_at = now.replace(hour=17, minute=55, second=0, microsecond=0)
+universal = pytz.timezone("UTC")
+now = datetime.datetime.now(universal)
+exit_open_positions_at = now.replace(hour=23, minute=30, second=0, microsecond=0)
 
 
 day_trade_counter = 0
@@ -44,13 +44,10 @@ symbols = [setup["symbol"] for setup in cached_configs]
 
 # REFACTOR FOR CRYPTO
 # replace websockets/api calls...
-# timezone UTC, change end condition to 23:30
 # update/remove trade log writes
 # rewrite PDT protection to be max concurrent trades protection
     # include logic to prevent late entries after a slot opens up
     # (e.g. entry triggered, but in 4/4 positions, later 3/4 positions, tick shouldn't be able to trigger another entry so late)
-# rewrite log writes
-# remove any time-based constraints/logic
 # refactor profit taking to be 100%; no need for partial profits
     # profit taking logic needs crypto-specific testing/tweaking...
 
@@ -91,7 +88,7 @@ async def monitor_trade(setup):
         #     continue
 
         try:
-            now = datetime.datetime.now(eastern)
+            now = datetime.datetime.now(universal)
             if now >= exit_open_positions_at:
                 if in_position:
                     if take_50:
@@ -114,8 +111,8 @@ async def monitor_trade(setup):
                 if day_trade_counter < 1 and price > entry:
                     async with day_trade_lock:
                         if day_trade_counter < 1:
-                            now = datetime.datetime.now(eastern).time()
-                            if now < datetime.time(17,30): # ~30min before end, tweak
+                            now = datetime.datetime.now(universal).time()
+                            if now < datetime.time(23,0): # ~30min before end, tweak
                                 # place_order(symbol, qty)
                                 print(f"{qty} [{symbol}] BUY @ {price}")
                                 in_position = True
