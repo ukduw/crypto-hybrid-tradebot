@@ -45,7 +45,6 @@ trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE
 crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
 
 # REFACTOR FOR CRYPTO
-# replace websockets
 # replace api calls
 # remove day high assignments
 # remove gap up protection
@@ -54,12 +53,6 @@ crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=Da
 
 
 # ===== WEBSOCKETS, DATA STREAM HANDLERS ===== #
-@dataclass
-class QuoteEntry:
-    bid: float
-    ask: float
-    timestamp: datetime.datetime
-
 @dataclass
 class BarEntry:
     open: float
