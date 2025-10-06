@@ -9,7 +9,7 @@ import aiofiles
 import os
 
 
-from alpaca_utils import start_price_bar_stream, get_current_price, get_bar_data, stop_price_bar_stream, place_order, close_position, stock_stream
+from alpaca_utils import start_price_bar_stream, get_current_price, get_bar_data, stop_price_bar_stream, place_order, close_position, crypto_stream
 
 universal = pytz.timezone("UTC")
 now = datetime.datetime.now(universal)
@@ -198,7 +198,7 @@ async def handle_shutdown():
 
     for symbol in symbols:
         await stop_price_bar_stream(symbol)
-    await stock_stream.stop_ws()
+    await crypto_stream.stop_ws()
 
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task() and not t.done()]
     for t in tasks:
