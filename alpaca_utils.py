@@ -46,7 +46,7 @@ crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=Da
 
 # REFACTOR FOR CRYPTO
 # replace api calls
-# remove day high assignments
+# update handlers
 # remove gap up protection
 # fix/replace trading utils; not need for extended/intraday logic
 # change timezone to UTC
@@ -92,8 +92,6 @@ class DataHandler:
             if gap_up_first_tick[symbol] > entry:
                 if trade_price > gap_up_first_tick[symbol] * 1.015 or trade_price <= exit: # 1.5%, TWEAK
                     latest_prices[symbol] = trade_price
-                    if symbol not in day_high or trade_price > day_high[symbol]:
-                        day_high[symbol] = trade_price
                     async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
                         await file.write(f"[GAP UP] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
                 else:
@@ -112,8 +110,6 @@ class DataHandler:
                         await file.write(f"[>ENTRY - {tick_counter[symbol]}/50] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
                 else:
                     latest_prices[symbol] = trade_price
-                    if symbol not in day_high or trade_price > day_high[symbol]:
-                        day_high[symbol] = trade_price
                     async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
                         await file.write(f"[CONFIRMED TICK] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
 
@@ -154,10 +150,10 @@ async def start_price_bar_stream(symbols):
     while True:
         try:
             for symbol in symbols:
-                stock_stream.subscribe_trades(handler.handle_trade, symbol)
-                stock_stream.subscribe_bars(handler.handle_bar, symbol)
+                crypto_stream.subscribe_trades(handler.handle_trade, symbol)
+                crypto_stream.subscribe_bars(handler.handle_bar, symbol)
             
-            await stock_stream._run_forever()
+            await crypto_stream._run_forever()
         except asyncio.CancelledError:
             print("[WebSocket] Cancelled")
             raise
@@ -178,8 +174,8 @@ async def start_price_bar_stream(symbols):
 
 async def stop_price_bar_stream(symbol):
     try:
-        stock_stream.unsubscribe_trades(symbol)
-        stock_stream.unsubscribe_bars(symbol)
+        crypto_stream.unsubscribe_trades(symbol)
+        crypto_stream.unsubscribe_bars(symbol)
         print(f"[{symbol}] price/quote stream unsubscribed")
     except Exception as e:
         print (f"[WebSocket] Error unsubscribing from {symbol}: {e}")
