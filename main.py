@@ -222,7 +222,3 @@ def main_start():
 if __name__ == "__main__":
     main_start()
 
-
-
-
-# don't forget pip freeze > requirements.txt
