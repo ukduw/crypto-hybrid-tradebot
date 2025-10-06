@@ -27,8 +27,6 @@ CONFIG_PATH = "configs.json"
 with open("configs.json", "r") as f:
     configs = json.load(f)
 
-gap_up_first_tick = {}
-gap_counter = {}
 last_tick = {}
 tick_counter = {}
 
@@ -39,16 +37,13 @@ latest_highs = {}
 latest_timestamps = {}
 
 eastern = pytz.timezone("US/Eastern")
-now = datetime.datetime.now(eastern)
 
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
 crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
 
 # REFACTOR FOR CRYPTO
-# replace api calls
 # update handlers
-# remove gap up protection
-# fix/replace trading utils; not need for extended/intraday logic
+# fix/replace trading utils; no need for extended/intraday logic
 # change timezone to UTC
 
 
@@ -82,41 +77,19 @@ class DataHandler:
             return
         
         if trade_price > entry:
-            if symbol not in gap_up_first_tick:
-                gap_up_first_tick[symbol] = trade_price
-                gap_counter[symbol] = 0
-            elif symbol not in last_tick:
-                last_tick[symbol] = trade_price
-                tick_counter[symbol] = 0
-
-            if gap_up_first_tick[symbol] > entry:
-                if trade_price > gap_up_first_tick[symbol] * 1.015 or trade_price <= exit: # 1.5%, TWEAK
-                    latest_prices[symbol] = trade_price
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[GAP UP] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-                else:
-                    gap_counter[symbol] += 1
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[GAP UP - {gap_counter[symbol]}/100] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-
-                if gap_counter[symbol] >= 100: # 100 consolidation ticks, TWEAK
-                    gap_up_first_tick[symbol] = 0 # only tracked once, then last_tick tracked instead
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[GAP UP MONITORING ENDED] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
+            if exit < trade_price < last_tick[symbol]:
+                tick_counter[symbol] += 1
+                async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
+                    await file.write(f"[>ENTRY - {tick_counter[symbol]}/50] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
             else:
-                if exit < trade_price < last_tick[symbol]:
-                    tick_counter[symbol] += 1
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[>ENTRY - {tick_counter[symbol]}/50] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
-                else:
-                    latest_prices[symbol] = trade_price
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[CONFIRMED TICK] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
+                latest_prices[symbol] = trade_price
+                async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
+                    await file.write(f"[CONFIRMED TICK] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
 
-                if tick_counter[symbol] >= 50:
-                    last_tick.pop(symbol)
-                    async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
-                        await file.write(f"[>ENTRY MONITORING ENDED] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
+            if tick_counter[symbol] >= 50:
+                last_tick.pop(symbol)
+                async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
+                    await file.write(f"[>ENTRY MONITORING ENDED] {now},{trade.symbol},PRICE {trade.price},VOL {trade.size}, COND {trade.conditions}" + "\n")
         elif trade_price <= exit:
             latest_prices[symbol] = trade_price
             async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
