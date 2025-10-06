@@ -1,6 +1,6 @@
 from alpaca.data.live import CryptoDataStream
 from alpaca.data.models import Trade, Bar
-from alpaca.data.enums import DataFeed
+from alpaca.data.enums import CryptoFeed
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
@@ -39,7 +39,7 @@ latest_timestamps = {}
 universal = pytz.timezone("UTC")
 
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
-crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
+crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=CryptoFeed.US)
 
 
 # ===== WEBSOCKETS, DATA STREAM HANDLERS ===== #
