@@ -42,9 +42,6 @@ def load_configs_on_modification():
 symbols = [setup["symbol"] for setup in cached_configs]
 
 
-# REFACTOR FOR CRYPTO
-# replace websockets/api calls...
-
 # needs profit taking logic to allow winners to run, not take profit on first >1.5 pwap
     # profit taking logic needs crypto-specific testing/tweaking...
 # event driven refactor low priority
