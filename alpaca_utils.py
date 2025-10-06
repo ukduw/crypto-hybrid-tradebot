@@ -36,13 +36,10 @@ vwaps = {}
 latest_highs = {}
 latest_timestamps = {}
 
-eastern = pytz.timezone("US/Eastern")
+universal = pytz.timezone("UTC")
 
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
 crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
-
-
-# change timezone to UTC
 
 
 # ===== WEBSOCKETS, DATA STREAM HANDLERS ===== #
@@ -67,7 +64,7 @@ class DataHandler:
         setup = next((s for s in configs if s["symbol"] == symbol), None)
         entry = setup["entry_price"]
         exit = setup["stop_loss"]
-        now = datetime.datetime.now(eastern)
+        now = datetime.datetime.now(universal)
 
         if trade.size < 100:
             async with aiofiles.open(f"price-stream-logs/price_stream_log_{trade.symbol}.txt", "a") as file:
