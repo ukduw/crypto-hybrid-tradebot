@@ -1,10 +1,9 @@
-from alpaca.data.live import StockDataStream
+from alpaca.data.live import CryptoDataStream
 from alpaca.data.models import Trade, Bar
 from alpaca.data.enums import DataFeed
 
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.requests import LimitOrderRequest
+from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
 
 import datetime, pytz, asyncio, aiofiles
@@ -43,7 +42,7 @@ eastern = pytz.timezone("US/Eastern")
 now = datetime.datetime.now(eastern)
 
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
-stock_stream = StockDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.SIP)
+crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
 
 # REFACTOR FOR CRYPTO
 # replace websockets
