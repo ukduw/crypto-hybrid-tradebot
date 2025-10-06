@@ -60,13 +60,14 @@ def daily_pl_calc():
     for coin in entry_exit:
         pl = round( ( coin[1] / coin[0] - 1 ) * 100, 1 )
         percs.append(pl)
+        entry_exit[coin].append(pl)
 
     total_trades = len(percs)
     total_pl = sum(percs)
     
 
-    pb.push_note("Crypto P/L", f"{total_pl}% ({total_trades}): {percs}")
-    print(f"{total_pl}% ({total_trades}): {percs}")
+    pb.push_note("Crypto P/L", f"{total_pl}% ({total_trades}): {", ".join(f"{key}: {item[2]}" for key, item in entry_exit.items())}")
+    print(f"{total_pl}% ({total_trades}): {", ".join(f"{key}: {item[2]}" for key, item in entry_exit.items())}")
 
 
 # output format:
