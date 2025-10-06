@@ -41,9 +41,7 @@ eastern = pytz.timezone("US/Eastern")
 trading_client = TradingClient(api_key=API_KEY, secret_key=SECRET_KEY, paper=USE_PAPER_TRADING)
 crypto_stream = CryptoDataStream(api_key=API_KEY, secret_key=SECRET_KEY, feed=DataFeed.Crypto)
 
-# REFACTOR FOR CRYPTO
-# update handlers
-# fix/replace trading utils; no need for extended/intraday logic
+
 # change timezone to UTC
 
 
@@ -175,48 +173,32 @@ def get_bar_data(symbol):
 
 # ===== TRADING CLIENT UTILS ===== #
 def place_order(symbol, qty):
-    intraday = is_intraday()
     tick = get_current_price(symbol)
 
-    if intraday:
-        order_data = MarketOrderRequest(
-            symbol = symbol,
-            qty = qty,
-            side = OrderSide.BUY,
-            type = OrderType.MARKET,
-            time_in_force = TimeInForce.DAY,
-            extended_hours = False
-        )
-    else:
-        order_data = LimitOrderRequest(
-            symbol = symbol,
-            qty = qty,
-            side = OrderSide.BUY,
-            type = OrderType.LIMIT,
-            time_in_force = TimeInForce.DAY,
-            limit_price = float(Decimal(tick * 1.01).quantize(Decimal("0.01"), rounding=ROUND_UP)) if tick >= 1.00 else float(Decimal(tick * 1.01).quantize(Decimal("0.0001"), rounding=ROUND_UP)),
-            extended_hours = True
-        )
+    order_data = LimitOrderRequest(
+        symbol = symbol,
+        qty = qty,
+        side = OrderSide.BUY,
+        type = OrderType.LIMIT,
+        time_in_force = TimeInForce.DAY,
+        limit_price = float(Decimal(tick * 1.005).quantize(Decimal("0.01"), rounding=ROUND_UP)) if tick >= 1.00 else float(Decimal(tick * 1.005).quantize(Decimal("0.0001"), rounding=ROUND_UP)),
+    )
     order = trading_client.submit_order(order_data)
     return order
 
 
 def close_position(symbol, qty):
-    intraday = is_intraday()
     tick = get_current_price(symbol)
 
-    if not intraday:
-        order_data = LimitOrderRequest(
-            symbol = symbol,
-            qty = qty,
-            side = OrderSide.SELL,
-            type = OrderType.LIMIT,
-            time_in_force = TimeInForce.DAY,
-            limit_price = float(Decimal(tick * 0.99).quantize(Decimal("0.01"), rounding=ROUND_DOWN)) if tick >= 1.00 else float(Decimal(tick * 0.99).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)),
-            extended_hours = True
-        )
-        order = trading_client.submit_order(order_data)
-        return order
-    else:
-        return trading_client.close_position(symbol, qty)
+    order_data = LimitOrderRequest(
+        symbol = symbol,
+        qty = qty,
+        side = OrderSide.SELL,
+        type = OrderType.LIMIT,
+        time_in_force = TimeInForce.DAY,
+        limit_price = float(Decimal(tick * 0.995).quantize(Decimal("0.01"), rounding=ROUND_DOWN)) if tick >= 1.00 else float(Decimal(tick * 0.995).quantize(Decimal("0.0001"), rounding=ROUND_DOWN)),
+    )
+    order = trading_client.submit_order(order_data)
+    return order
+
 
