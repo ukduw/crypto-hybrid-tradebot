@@ -29,9 +29,6 @@ while pb_reconnect_tries < 5:
         time.sleep(10)
 
 
-# WRITE TO LOG - NEEDS SYSTEMD SERVICE/TIMER
-    # run at 23:30 (UTC)?
-
 # intput format:
     # "{now}, {coin}, ENTRY/EXIT/skip/EOD EXIT, {qty}, {price}"
     # ...
