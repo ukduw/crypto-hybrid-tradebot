@@ -43,7 +43,23 @@ symbols = [setup["symbol"] for setup in cached_configs]
 
 
 # needs profit taking logic to allow winners to run, not take profit on first >1.5 pwap
-    # profit taking logic needs crypto-specific testing/tweaking...
+    # in-depth notes from stock script:
+        # maybe have series of if statements for different ratio ranges
+        # for very high ratios, switch to 5m candle logic and something similar to trail stop
+            # e.g. if next 5m bar peaks higher, keep holding?
+                # for x higher highs, hold?
+                # once it sets lower high by x% OR closes red, exit?
+        # otherwise, have condition triggers increment counter?
+            # e.g. x bars above condition = y% take profit
+            # split take-profit into 3?
+                # e.g. 1, 3, 5 counter, 1/3 take-profit per
+# profit taking logic needs crypto-specific testing/tweaking...
+    # determine whether single take profit is fine or if crypto also needs logic to allow winners to run
+    # so far, seems like single take profit is fine?
+
+# needs logic to account for edge case where config is empty (no valid plays)
+# don't run script if config empty
+
 # event driven refactor low priority
 # write README
 
