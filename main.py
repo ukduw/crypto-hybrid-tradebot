@@ -104,6 +104,9 @@ async def monitor_trade(setup):
                     async with aiofiles.open("trade-log/crypot_trade_log.txt", "a") as file:
                         await file.write(f"{now}, {symbol}, EOD EXIT, {qty}, {price}" + "\n")
 
+                async with aiofiles.open("trade-log/crypot_trade_log.txt", "a") as file:
+                    await file.write("\n")
+
                 await stop_price_bar_stream(symbol)
                 return
 
