@@ -166,6 +166,7 @@ async def monitor_trade(setup):
 
                     if timestamp_1m2 != timestamp_1m and not high_1m*0.985 < high_1m2 < high_1m*1.015: # 1.5%, tweak
                         break
+                    # may need to change second part of condition; may not apply to most crypto charts...
 
                     await asyncio.sleep(1)
                     
