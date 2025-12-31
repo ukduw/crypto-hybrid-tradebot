@@ -177,8 +177,8 @@ async def monitor_trade(setup):
 
                     # 1. consider refactoring to take profit on 5min candles
                     # 2. current take profit captures most wins, but takes profit far too soon on big runs
-                        # may need conditional logic
-                        # e.g. if ratio goes above 1.x, trailing stop loss
+                        # may need conditional logic to switch to trailing stop loss logic
+                        # this would need reliable condition to identify runners...
                     await asyncio.sleep(1)
                     
                 await asyncio.sleep(1)
