@@ -154,11 +154,6 @@ async def monitor_trade(setup):
                     pwap_ratio = (high_1m/entry - 1) / (high_1m/vwap - 1)
                 else:
                     continue
-                    # this guards against potential division by zero error, but results in skipped bar
-                    # high_1m == vwap would only ever happen if sell off -> spike happens (so, vwap goes lower than entry, then trends up to be == entry)
-                        # in this case, it's probably fine to skip this 1min bar
-                        # may be edge edge case where that was the only opportunity to take profit...
-                    # may need to rework this to not skip bar
 
                 if pwap_ratio > 1.5: # tweak
                     close_position(symbol, qty)
