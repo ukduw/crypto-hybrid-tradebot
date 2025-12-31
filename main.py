@@ -180,6 +180,10 @@ async def monitor_trade(setup):
                         break
                     # may need to change second part of condition; may not apply to most crypto charts...
 
+                    # 1. consider refactoring to take profit on 5min candles
+                    # 2. current take profit captures most wins, but takes profit far too soon on big runs
+                        # may need conditional logic
+                        # e.g. if ratio goes above 1.x, trailing stop loss
                     await asyncio.sleep(1)
                     
                 await asyncio.sleep(1)
