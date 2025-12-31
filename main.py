@@ -155,7 +155,7 @@ async def monitor_trade(setup):
                 else:
                     continue
 
-                if pwap_ratio > 1.5: # tweak
+                if pwap_ratio > 1.25: # TWEAK
                     close_position(symbol, qty)
                     global concurrent_trade_counter
                     async with concurrent_trade_lock:
