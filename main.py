@@ -150,7 +150,11 @@ async def monitor_trade(setup):
                 if any(bd is None for bd in [vwap, high_1m, timestamp_1m]):
                     continue
 
-                pwap_ratio = (high_1m/entry - 1) / (high_1m/vwap - 1)
+                if high_1m != vwap:
+                    pwap_ratio = (high_1m/entry - 1) / (high_1m/vwap - 1)
+                else:
+                    continue
+
                 if pwap_ratio > 1.5: # tweak
                     close_position(symbol, qty)
                     global concurrent_trade_counter
