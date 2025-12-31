@@ -173,12 +173,12 @@ async def monitor_trade(setup):
 
                     if timestamp_1m2 != timestamp_1m and not high_1m*0.985 < high_1m2 < high_1m*1.015: # 1.5%, tweak
                         break
-                    # may need to change second part of condition; may not apply to most crypto charts...
+                    # 1.5% does not apply to crypto - needs research
+                    # currently only taking profit once - refactor this while loop to assess next bar to confirm exit
+                        # need to change the profit taking condition above (pwap_ratio > 1.25 = take profit...)
+                        # maybe this while loop needs to be moved inside that if statement...
 
                     # 1. consider refactoring to take profit on 5min candles
-                    # 2. current take profit captures most wins, but takes profit far too soon on big runs
-                        # may need conditional logic to switch to trailing stop loss logic
-                        # this would need reliable condition to identify runners...
                     await asyncio.sleep(1)
                     
                 await asyncio.sleep(1)
